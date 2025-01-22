@@ -1,0 +1,14 @@
+# frostfs/config.yaml
+version: 'v1'
+server:
+  address: 0.0.0.0:8080
+  tls_enable: false
+logging:
+  level: debug
+  format: text
+network:
+  # Однонодовый вариант
+  name: "local-frostfs"
+storage:
+  # Путь к данным
+  path: /data/frostfs

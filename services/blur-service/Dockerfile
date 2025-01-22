@@ -1,0 +1,14 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY app.py /app/
+
+# В requirements.txt (пример):
+# flask==2.2.2
+# pillow==9.3.0
+# gunicorn==20.1.0
+
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]

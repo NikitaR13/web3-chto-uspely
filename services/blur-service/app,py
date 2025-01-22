@@ -1,0 +1,27 @@
+# services/blur-service/app.py
+
+import io
+from flask import Flask, request, send_file, jsonify
+from PIL import Image, ImageFilter
+
+app = Flask(__name__)
+
+@app.route('/blur', methods=['POST'])
+def blur_image():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    try:
+        img = Image.open(file.stream)
+        blurred = img.filter(ImageFilter.GaussianBlur(10))
+
+        buf = io.BytesIO()
+        blurred.save(buf, format='PNG')
+        buf.seek(0)
+        return send_file(buf, mimetype='image/png')
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
