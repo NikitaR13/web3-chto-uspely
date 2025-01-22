@@ -1,0 +1,81 @@
+version: "3.8"
+services:
+  neo-node:
+    build:
+      context: ./neo-node
+    container_name: "neo_node"
+    # Пример: ports: ...
+    ports:
+      - "10332:10332"  # RPC
+      - "10333:10333"  # P2P
+    networks:
+      - dappnet
+
+  frostfs:
+    build:
+      context: ./frostfs
+    container_name: "frostfs_node"
+    volumes:
+      - ./frostfs/data:/data/frostfs
+    ports:
+      - "8080:8080"
+    networks:
+      - dappnet
+
+  blur-service:
+    build:
+      context: ./services/blur-service
+    container_name: "blur_service"
+    ports:
+      - "5000:5000"
+    networks:
+      - dappnet
+
+  frostfs-service:
+    build:
+      context: ./services/frostfs-service
+    container_name: "frostfs_service"
+    environment:
+      - FROSTFS_ENDPOINT=frostfs:8080
+      - FROSTFS_CONTAINER_ID=cf4e8aa9d3dfac...  # TODO: реальный ID
+    ports:
+      - "8081:8081"
+    depends_on:
+      - frostfs
+    networks:
+      - dappnet
+
+  contract-client:
+    build:
+      context: ./services/contract-client
+    container_name: contract_client
+    environment:
+      - NEO_RPC=http://neo-node:10332
+      - CONTRACT_HASH=0x1234abcd...  # TODO: реальный хэш
+    ports:
+      - "5001:5001"
+    depends_on:
+      - neo-node
+    networks:
+      - dappnet
+
+  content-api:
+    build:
+      context: ./services/content-api
+    container_name: content_api
+    environment:
+      - BLUR_SERVICE_URL=http://blur_service:5000/blur
+      - FROSTFS_SERVICE_URL=http://frostfs_service:8081
+      - CONTRACT_CLIENT_URL=http://contract_client:5001
+    ports:
+      - "8082:8082"
+    depends_on:
+      - blur-service
+      - frostfs-service
+      - contract-client
+    networks:
+      - dappnet
+
+networks:
+  dappnet:
+    driver: bridge
